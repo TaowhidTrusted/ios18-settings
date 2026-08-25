@@ -17,9 +17,9 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Dependencies
+      - name: Install Build Tools (ldid, dpkg)
         run: |
-          brew install dpkg
+          brew install ldid dpkg
 
       - name: Setup Theos & iOS SDK
         run: |
@@ -34,6 +34,7 @@ jobs:
         run: |
           export THEOS=$HOME/theos
           export THEOS_PACKAGE_SCHEME=rootless
+          make clean || true
           make package FINALPACKAGE=1
 
       - name: Build APT Repo for Sileo
