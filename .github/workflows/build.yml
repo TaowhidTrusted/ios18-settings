@@ -43,7 +43,6 @@ jobs:
           cp packages/*.deb repo/debs/
           cd repo
           
-          # Create index for Sileo/Zebra
           dpkg-scanpackages -m debs /dev/null > Packages
           gzip -c9 Packages > Packages.gz
           bzip2 -c9 Packages > Packages.bz2
@@ -59,7 +58,6 @@ jobs:
           Description: iOS 18 Morph Rootless Tweak Repository for Sileo
           EOF
 
-          # Create index.html so browsers don't show 404
           cat << 'EOF' > index.html
           <!DOCTYPE html>
           <html lang="en">
