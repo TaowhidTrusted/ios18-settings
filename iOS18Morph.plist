@@ -8,7 +8,9 @@
         <array>
             <string>com.apple.springboard</string>
             <string>com.apple.ControlCenterUI</string>
+            <string>com.apple.ControlCenterServices</string>
             <string>com.apple.Preferences</string>
+            <string>com.apple.UIKitCore</string>
         </array>
     </dict>
 </dict>
