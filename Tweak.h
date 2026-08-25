@@ -108,6 +108,7 @@ extern NSString *const kCACornerCurveContinuous;
 @interface PSListController : UIViewController <UITableViewDataSource, UITableViewDelegate>
 @property (nonatomic, strong) UITableView *table;
 @property (nonatomic, strong) NSArray *specifiers;
+- (PSSpecifier *)specifier;
 - (PSSpecifier *)specifierAtIndex:(NSInteger)index;
 - (PSSpecifier *)specifierForID:(NSString *)identifier;
 - (void)viewDidLoad;
