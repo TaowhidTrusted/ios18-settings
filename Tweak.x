@@ -1,28 +1,51 @@
-//
-//  Tweak.x
-//  iOS18Morph - iOS 18 Design Language Hook for iOS 16.0-16.7.x
-//  Rootless Theos Hooking Suite (arm64/arm64e)
-//
-
 #import "Tweak.h"
 #import <objc/runtime.h>
 
-#pragma mark - Constant Definitions
+#define IOS18_SQUIRCLE_RADIUS 26.0f
+#define IOS18_HERO_CARD_HEIGHT 156.0f
 
-static const CGFloat kIOS18ModuleRadius = 26.0f;        // Continuous corner radius for 2x2 & 2x1 modules
-static const CGFloat kIOS18SliderCornerRadius = 26.0f;  // Thick pill radius for continuous sliders
-static const CGFloat kIOS18HeroCardHeight = 158.0f;     // Height of Settings Top Hero Card
+#ifndef kCACornerCurveContinuous
+#define kCACornerCurveContinuous @"continuous"
+#endif
 
-#pragma mark - Custom iOS 18 Settings Hero Card Implementation
+#pragma mark - Helper Functions
 
-@implementation iOS18SettingsHeroCardView
+static inline void applyContinuousCurve(UIView *view, CGFloat radius) {
+    if (!view) return;
+    view.layer.cornerCurve = kCACornerCurveContinuous;
+    view.layer.cornerRadius = radius;
+    view.layer.masksToBounds = YES;
+    view.clipsToBounds = YES;
+}
+
+static void morphViewToiOS18(UIView *view) {
+    if (!view) return;
+    CGRect bounds = view.bounds;
+    if (bounds.size.width <= 0 || bounds.size.height <= 0) return;
+
+    // Detect 1x1 small modules (Flashlight, Timer, Low Power, Camera, Shazam, Screen Record, etc.)
+    if (bounds.size.width <= 82.0f && bounds.size.height <= 82.0f) {
+        CGFloat circleRadius = MIN(bounds.size.width, bounds.size.height) / 2.0f;
+        applyContinuousCurve(view, circleRadius);
+    } else {
+        // 2x2 platter or Focus 2x1 platter
+        applyContinuousCurve(view, IOS18_SQUIRCLE_RADIUS);
+    }
+}
+
+#pragma mark - Settings Hero Card View
+
+@implementation iOS18SettingsHeroCardView {
+    UIVisualEffectView *_blurBackgroundView;
+    UIImageView *_iconImageView;
+    UILabel *_titleLabel;
+    UILabel *_descriptionLabel;
+}
 
 - (instancetype)initWithTitle:(NSString *)title description:(NSString *)desc iconName:(NSString *)iconName {
-    self = [super initWithFrame:CGRectMake(16.0f, 10.0f, [UIScreen mainScreen].bounds.size.width - 32.0f, kIOS18HeroCardHeight)];
+    self = [super initWithFrame:CGRectMake(16.0f, 8.0f, [UIScreen mainScreen].bounds.size.width - 32.0f, IOS18_HERO_CARD_HEIGHT)];
     if (self) {
-        self.layer.cornerRadius = 24.0f;
-        self.layer.cornerCurve = kCACornerCurveContinuous;
-        self.layer.masksToBounds = YES;
+        applyContinuousCurve(self, 24.0f);
         
         UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemThinMaterial];
         _blurBackgroundView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
@@ -31,30 +54,28 @@ static const CGFloat kIOS18HeroCardHeight = 158.0f;     // Height of Settings To
         [self addSubview:_blurBackgroundView];
         
         self.layer.borderWidth = 0.5f;
-        self.layer.borderColor = [UIColor colorWithWhite:1.0f alpha:0.12f].CGColor;
+        self.layer.borderColor = [UIColor colorWithWhite:1.0f alpha:0.15f].CGColor;
         
-        UIView *iconContainer = [[UIView alloc] initWithFrame:CGRectMake((self.bounds.size.width - 56.0f) / 2.0f, 18.0f, 56.0f, 56.0f)];
-        iconContainer.layer.cornerRadius = 14.0f;
-        iconContainer.layer.cornerCurve = kCACornerCurveContinuous;
+        UIView *iconContainer = [[UIView alloc] initWithFrame:CGRectMake((self.bounds.size.width - 54.0f) / 2.0f, 16.0f, 54.0f, 54.0f)];
+        applyContinuousCurve(iconContainer, 14.0f);
         iconContainer.backgroundColor = [UIColor colorWithRed:0.55f green:0.55f blue:0.58f alpha:0.25f];
-        iconContainer.layer.masksToBounds = YES;
         [self addSubview:iconContainer];
         
-        _iconImageView = [[UIImageView alloc] initWithFrame:CGRectMake(12.0f, 12.0f, 32.0f, 32.0f)];
+        _iconImageView = [[UIImageView alloc] initWithFrame:CGRectMake(11.0f, 11.0f, 32.0f, 32.0f)];
         _iconImageView.contentMode = UIViewContentModeScaleAspectFit;
         _iconImageView.tintColor = [UIColor whiteColor];
-        UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:28.0 weight:UIImageSymbolWeightMedium];
+        UIImageSymbolConfiguration *config = [UIImageSymbolConfiguration configurationWithPointSize:26.0 weight:UIImageSymbolWeightMedium];
         _iconImageView.image = [UIImage systemImageNamed:iconName withConfiguration:config];
         [iconContainer addSubview:_iconImageView];
         
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20.0f, 82.0f, self.bounds.size.width - 40.0f, 24.0f)];
+        _titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(16.0f, 78.0f, self.bounds.size.width - 32.0f, 24.0f)];
         _titleLabel.text = title;
         _titleLabel.textAlignment = NSTextAlignmentCenter;
         _titleLabel.font = [UIFont systemFontOfSize:19.0f weight:UIFontWeightBold];
         _titleLabel.textColor = [UIColor labelColor];
         [self addSubview:_titleLabel];
         
-        _descriptionLabel = [[UILabel alloc] initWithFrame:CGRectMake(24.0f, 108.0f, self.bounds.size.width - 48.0f, 38.0f)];
+        _descriptionLabel = [[UILabel alloc] initWithFrame:CGRectMake(20.0f, 104.0f, self.bounds.size.width - 40.0f, 36.0f)];
         _descriptionLabel.text = desc;
         _descriptionLabel.textAlignment = NSTextAlignmentCenter;
         _descriptionLabel.numberOfLines = 2;
@@ -67,114 +88,88 @@ static const CGFloat kIOS18HeroCardHeight = 158.0f;     // Height of Settings To
 
 @end
 
-#pragma mark - ==========================================================
-#pragma mark - PART 1: Control Center UI Hooks (SpringBoard & ControlCenterUI)
-#pragma mark - ==========================================================
+#pragma mark - Control Center Hooks
 
 %group ControlCenterHooks
 
-// Helper function to apply circular or squircle styling to any view
-static void applyIOS18PlatterStyle(UIView *view) {
-    if (!view) return;
-    CGRect bounds = view.bounds;
-    if (bounds.size.width <= 0 || bounds.size.height <= 0) return;
-    
-    view.layer.cornerCurve = kCACornerCurveContinuous;
-    
-    // 1x1 toggle check (Flashlight, Low Power, Timer, Camera, Shazam, Wallet, etc.)
-    if (bounds.size.width <= 78.0f && bounds.size.height <= 78.0f) {
-        CGFloat radius = MIN(bounds.size.width, bounds.size.height) / 2.0f;
-        view.layer.cornerRadius = radius;
-        view.clipsToBounds = YES;
-    } else {
-        // 2x2 platter or 2x1 Focus module
-        view.layer.cornerRadius = kIOS18ModuleRadius;
-        view.clipsToBounds = YES;
-    }
-}
-
-//
-// Hook: CCUIContentModuleContainerView
-//
+// Platter Outer Container
 %hook CCUIContentModuleContainerView
 
 - (void)layoutSubviews {
     %orig;
-    applyIOS18PlatterStyle(self);
-    
+    morphViewToiOS18(self);
+
     if ([self respondsToSelector:@selector(backgroundMaterialView)]) {
-        UIView *matView = (UIView *)[self backgroundMaterialView];
-        if (matView) {
-            applyIOS18PlatterStyle(matView);
-        }
+        UIView *bg = (UIView *)[self backgroundMaterialView];
+        if (bg) morphViewToiOS18(bg);
     }
     
     if ([self respondsToSelector:@selector(contentView)]) {
-        UIView *cView = [self contentView];
-        if (cView) {
-            applyIOS18PlatterStyle(cView);
-        }
+        UIView *content = [self contentView];
+        if (content) morphViewToiOS18(content);
     }
 }
 
 - (void)_setContinuousCornerRadius:(CGFloat)radius {
-    CGRect bounds = self.bounds;
-    if (bounds.size.width <= 78.0f && bounds.size.height <= 78.0f) {
-        %orig(MIN(bounds.size.width, bounds.size.height) / 2.0f);
+    CGRect b = self.bounds;
+    if (b.size.width > 0 && b.size.width <= 82.0f) {
+        %orig(MIN(b.size.width, b.size.height) / 2.0f);
     } else {
-        %orig(kIOS18ModuleRadius);
+        %orig(IOS18_SQUIRCLE_RADIUS);
     }
 }
 
 %end
 
-//
-// Hook: CCUIContentModuleContentContainerView
-//
+// Content Sub-Container
 %hook CCUIContentModuleContentContainerView
 
 - (void)layoutSubviews {
     %orig;
-    applyIOS18PlatterStyle(self);
-    
+    morphViewToiOS18(self);
+
     if ([self respondsToSelector:@selector(contentView)]) {
-        UIView *cView = [self contentView];
-        if (cView) {
-            applyIOS18PlatterStyle(cView);
-        }
+        UIView *content = [self contentView];
+        if (content) morphViewToiOS18(content);
     }
 }
 
 - (void)_setContinuousCornerRadius:(CGFloat)radius {
-    CGRect bounds = self.bounds;
-    if (bounds.size.width <= 78.0f && bounds.size.height <= 78.0f) {
-        %orig(MIN(bounds.size.width, bounds.size.height) / 2.0f);
+    CGRect b = self.bounds;
+    if (b.size.width > 0 && b.size.width <= 82.0f) {
+        %orig(MIN(b.size.width, b.size.height) / 2.0f);
     } else {
-        %orig(kIOS18ModuleRadius);
+        %orig(IOS18_SQUIRCLE_RADIUS);
     }
 }
 
 %end
 
-//
-// Hook: CCUIButtonModuleView
-// 1x1 buttons (Flashlight, Low Power, Timer, Camera, Shazam, Screen Recording, Wallet, QR, Text Size, Voice Memos)
-//
+// 1x1 Toggle Module Buttons (Flashlight, Low Power, Timer, Camera, Shazam, etc.)
 %hook CCUIButtonModuleView
 
 - (void)layoutSubviews {
     %orig;
-    applyIOS18PlatterStyle(self);
-    
-    for (UIView *subview in self.subviews) {
-        applyIOS18PlatterStyle(subview);
+    morphViewToiOS18(self);
+
+    for (UIView *sub in self.subviews) {
+        morphViewToiOS18(sub);
     }
 }
 
 - (void)_setContinuousCornerRadius:(CGFloat)radius {
-    CGRect bounds = self.bounds;
-    if (bounds.size.width > 0 && bounds.size.height > 0) {
-        %orig(MIN(bounds.size.width, bounds.size.height) / 2.0f);
+    CGRect b = self.bounds;
+    if (b.size.width > 0 && b.size.height > 0) {
+        %orig(MIN(b.size.width, b.size.height) / 2.0f);
+    } else {
+        %orig(radius);
+    }
+}
+
+- (void)_setCornerRadius:(CGFloat)radius {
+    CGRect b = self.bounds;
+    if (b.size.width > 0 && b.size.height > 0) {
+        %orig(MIN(b.size.width, b.size.height) / 2.0f);
     } else {
         %orig(radius);
     }
@@ -182,172 +177,83 @@ static void applyIOS18PlatterStyle(UIView *view) {
 
 %end
 
-//
-// Hook: CCUIRoundButton
-// Round toggle buttons inside platters and standalone controls
-//
+// Standalone Circular Buttons
 %hook CCUIRoundButton
 
 - (void)layoutSubviews {
     %orig;
-    
-    self.layer.cornerCurve = kCACornerCurveContinuous;
-    self.layer.cornerRadius = MIN(self.bounds.size.width, self.bounds.size.height) / 2.0f;
-    self.clipsToBounds = YES;
-    
-    UIView *bgView = nil;
+    CGFloat r = MIN(self.bounds.size.width, self.bounds.size.height) / 2.0f;
+    applyContinuousCurve(self, r);
+
+    UIView *bg = nil;
     if ([self respondsToSelector:@selector(normalStateBackgroundView)]) {
-        bgView = [self normalStateBackgroundView];
+        bg = [self normalStateBackgroundView];
     }
-    
-    if (bgView) {
-        bgView.layer.cornerCurve = kCACornerCurveContinuous;
-        bgView.layer.cornerRadius = MIN(bgView.bounds.size.width, bgView.bounds.size.height) / 2.0f;
-        bgView.clipsToBounds = YES;
+    if (bg) {
+        applyContinuousCurve(bg, r);
     }
 }
 
 %end
 
-//
-// Hook: CCUIMenuModuleItemView
-//
-%hook CCUIMenuModuleItemView
-
-- (void)layoutSubviews {
-    %orig;
-    self.layer.cornerCurve = kCACornerCurveContinuous;
-    self.layer.cornerRadius = 16.0f;
-    self.clipsToBounds = YES;
-}
-
-%end
-
-//
-// Hook: CCUIContinuousSliderView
-// Redesigns Brightness and Volume sliders with iOS 18 thick rounded capsule styling
-//
+// Brightness & Volume Sliders
 %hook CCUIContinuousSliderView
 
 - (void)layoutSubviews {
     %orig;
-    
-    self.layer.cornerCurve = kCACornerCurveContinuous;
-    self.layer.cornerRadius = kIOS18SliderCornerRadius;
-    self.clipsToBounds = YES;
-    
+    applyContinuousCurve(self, IOS18_SQUIRCLE_RADIUS);
+
     if ([self respondsToSelector:@selector(valueIndicatorClippingView)]) {
-        UIView *clippingView = [self valueIndicatorClippingView];
-        if (clippingView) {
-            clippingView.layer.cornerCurve = kCACornerCurveContinuous;
-            clippingView.layer.cornerRadius = kIOS18SliderCornerRadius;
-            clippingView.clipsToBounds = YES;
-        }
+        UIView *v = [self valueIndicatorClippingView];
+        if (v) applyContinuousCurve(v, IOS18_SQUIRCLE_RADIUS);
     }
     
     if ([self respondsToSelector:@selector(backgroundView)]) {
         UIView *bg = [self backgroundView];
-        if (bg) {
-            bg.layer.cornerCurve = kCACornerCurveContinuous;
-            bg.layer.cornerRadius = kIOS18SliderCornerRadius;
-            bg.clipsToBounds = YES;
-        }
+        if (bg) applyContinuousCurve(bg, IOS18_SQUIRCLE_RADIUS);
     }
 }
 
 - (void)_setContinuousCornerRadius:(CGFloat)radius {
-    %orig(kIOS18SliderCornerRadius);
+    %orig(IOS18_SQUIRCLE_RADIUS);
 }
 
 %end
 
-//
-// Hook: CCUIModularControlCenterOverlayViewController
-// Adds top Edit '+' and Power buttons to Control Center header
-//
-%hook CCUIModularControlCenterOverlayViewController
-
-- (void)viewDidLoad {
-    %orig;
-    
-    UIView *headerView = self.view;
-    if ([self respondsToSelector:@selector(overlayHeaderView)]) {
-        headerView = [self overlayHeaderView] ?: self.view;
-    }
-    
-    // Top-left '+' Customize Button
-    UIButton *addButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    addButton.frame = CGRectMake(24.0f, 54.0f, 36.0f, 36.0f);
-    addButton.tag = 1801;
-    UIImageSymbolConfiguration *addConfig = [UIImageSymbolConfiguration configurationWithPointSize:17.0 weight:UIImageSymbolWeightSemibold];
-    [addButton setImage:[UIImage systemImageNamed:@"plus" withConfiguration:addConfig] forState:UIControlStateNormal];
-    addButton.tintColor = [UIColor whiteColor];
-    addButton.backgroundColor = [UIColor colorWithWhite:1.0f alpha:0.16f];
-    addButton.layer.cornerRadius = 18.0f;
-    addButton.layer.cornerCurve = kCACornerCurveContinuous;
-    [headerView addSubview:addButton];
-    
-    // Top-right Power Button
-    UIButton *powerButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    powerButton.frame = CGRectMake([UIScreen mainScreen].bounds.size.width - 60.0f, 54.0f, 36.0f, 36.0f);
-    powerButton.tag = 1802;
-    UIImageSymbolConfiguration *pwrConfig = [UIImageSymbolConfiguration configurationWithPointSize:16.0 weight:UIImageSymbolWeightBold];
-    [powerButton setImage:[UIImage systemImageNamed:@"power" withConfiguration:pwrConfig] forState:UIControlStateNormal];
-    powerButton.tintColor = [UIColor whiteColor];
-    powerButton.backgroundColor = [UIColor colorWithWhite:1.0f alpha:0.16f];
-    powerButton.layer.cornerRadius = 18.0f;
-    powerButton.layer.cornerCurve = kCACornerCurveContinuous;
-    [headerView addSubview:powerButton];
-}
-
 %end
 
-%end // ControlCenterHooks
-
-#pragma mark - ==========================================================
-#pragma mark - PART 2: Settings App Hooks (Preferences.app)
-#pragma mark - ==========================================================
+#pragma mark - Settings App Hooks
 
 %group SettingsHooks
 
-//
-// Hook: PSListController / Category Views
-// Injects the iconic iOS 18 Hero Card at the top of category pages (e.g. General)
-//
 %hook PSListController
 
 - (void)viewDidLoad {
     %orig;
     
-    NSString *controllerTitle = self.title ?: @"";
-    NSString *specifierID = @"";
+    NSString *title = self.title ?: @"";
+    NSString *specID = @"";
     if ([self respondsToSelector:@selector(specifier)]) {
-        PSSpecifier *spec = [self specifier];
-        if (spec && [spec respondsToSelector:@selector(identifier)]) {
-            specifierID = [spec identifier] ?: @"";
+        PSSpecifier *sp = [self specifier];
+        if (sp && [sp respondsToSelector:@selector(identifier)]) {
+            specID = [sp identifier] ?: @"";
         }
     }
     
-    BOOL isGeneral = [controllerTitle isEqualToString:@"General"] || 
-                     [specifierID isEqualToString:@"General"] || 
-                     [self isKindOfClass:objc_getClass("GeneralController")];
-                     
-    if (isGeneral) {
+    if ([title isEqualToString:@"General"] || [specID isEqualToString:@"General"] || [self isKindOfClass:objc_getClass("GeneralController")]) {
         iOS18SettingsHeroCardView *heroCard = [[iOS18SettingsHeroCardView alloc] 
             initWithTitle:@"General"
-            description:@"Manage your overall setup and preferences for iPhone, such as software updates, device language, CarPlay, AirDrop, and more."
+            description:@"Manage overall setup and preferences for iPhone, such as AirDrop, CarPlay, Language, and Software Update."
             iconName:@"gearshape.fill"];
         
-        UIView *headerContainer = [[UIView alloc] initWithFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, kIOS18HeroCardHeight + 20.0f)];
-        [headerContainer addSubview:heroCard];
-        
-        self.table.tableHeaderView = headerContainer;
+        UIView *headerWrap = [[UIView alloc] initWithFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, IOS18_HERO_CARD_HEIGHT + 16.0f)];
+        [headerWrap addSubview:heroCard];
+        self.table.tableHeaderView = headerWrap;
     }
 }
 
 - (void)viewWillAppear:(BOOL)animated {
     %orig(animated);
-    
     if (self.table) {
         self.table.separatorInset = UIEdgeInsetsMake(0, 56.0f, 0, 16.0f);
         self.table.layoutMargins = UIEdgeInsetsMake(0, 16.0f, 0, 16.0f);
@@ -356,55 +262,47 @@ static void applyIOS18PlatterStyle(UIView *view) {
 
 %end
 
-//
-// Hook: PSTableCell
-// Modernizes table cells into iOS 18 inset card rows with continuous corner curves
-//
 %hook PSTableCell
 
 - (void)layoutSubviews {
     %orig;
+    applyContinuousCurve(self, 16.0f);
     
-    self.layer.cornerCurve = kCACornerCurveContinuous;
-    
-    UIImageView *iconView = nil;
+    UIImageView *iv = nil;
     if ([self respondsToSelector:@selector(iconImageView)]) {
-        iconView = [self iconImageView];
+        iv = [self iconImageView];
     } else {
-        iconView = self.imageView;
+        iv = self.imageView;
     }
     
-    if (iconView) {
-        iconView.layer.cornerCurve = kCACornerCurveContinuous;
-        iconView.layer.cornerRadius = 7.0f;
-        iconView.layer.masksToBounds = YES;
+    if (iv) {
+        applyContinuousCurve(iv, 7.0f);
     }
 }
 
 - (void)_setContinuousCornerRadius:(CGFloat)radius {
-    %orig(20.0f);
+    %orig(16.0f);
 }
 
 %end
 
-%end // SettingsHooks
+%end
 
-#pragma mark - ==========================================================
-#pragma mark - Initialization Constructor
-#pragma mark - ==========================================================
+#pragma mark - Constructor
 
 %ctor {
     @autoreleasepool {
-        NSString *bundleID = [[NSBundle mainBundle] bundleIdentifier];
+        NSString *bid = [[NSBundle mainBundle] bundleIdentifier];
         
-        // Initialize SpringBoard / Control Center hooks
-        if ([bundleID isEqualToString:@"com.apple.springboard"] || 
-            [bundleID isEqualToString:@"com.apple.ControlCenterUI"]) {
+        // SpringBoard & ControlCenterUI hook
+        if ([bid isEqualToString:@"com.apple.springboard"] || 
+            [bid isEqualToString:@"com.apple.ControlCenterUI"] ||
+            [bid isEqualToString:@"com.apple.ControlCenterServices"]) {
             %init(ControlCenterHooks);
         }
         
-        // Initialize Settings (Preferences.app) hooks
-        if ([bundleID isEqualToString:@"com.apple.Preferences"]) {
+        // Preferences / Settings App hook
+        if ([bid isEqualToString:@"com.apple.Preferences"]) {
             %init(SettingsHooks);
         }
     }
