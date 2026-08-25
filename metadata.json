@@ -1,0 +1,6 @@
+{
+  "name": "iOS 18 Tweak Suite (Theos Rootless)",
+  "description": "Rootless Theos iOS 16 tweak suite for iOS 18 Control Center and Settings UI with live interactive simulator and compilation source code generator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
