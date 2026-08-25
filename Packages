@@ -5,10 +5,10 @@ Maintainer: Taowhid <you@example.com>
 Installed-Size: 172
 Depends: mobilesubstrate (>= 0.9.5000), firmware (>= 16.0)
 Filename: debs/com.jailbreak.ios18morph_1.0.0_iphoneos-arm64.deb
-Size: 9982
-MD5sum: 0e26f0d4ec8415962f1145cca792a05b
-SHA1: 8f0db719a2b14dab098d6bce99c787b20f8df17c
-SHA256: a97b0cfbbab0e7e010e0aac8b8a0af0e7daa705d334c018d7860940e9f97007e
+Size: 10038
+MD5sum: 1b3195fd08080eee56c5b82d5505f9bc
+SHA1: cbb1317d446d70c873ab7a39fb9fe43084c37ffc
+SHA256: 2d318b0ad0a4e8e9e022b0ebbd7dd6353f67d22661ffb11845a48466e2b2ecd3
 Section: Tweaks
 Description: Replaces iOS 16 Control Center and Settings with iOS 18 continuous squircle platters and circular toggles.
 Author: Taowhid
