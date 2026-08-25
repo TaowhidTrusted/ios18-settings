@@ -320,7 +320,13 @@ static void applyIOS18PlatterStyle(UIView *view) {
     %orig;
     
     NSString *controllerTitle = self.title ?: @"";
-    NSString *specifierID = [[self specifier] identifier] ?: @"";
+    NSString *specifierID = @"";
+    if ([self respondsToSelector:@selector(specifier)]) {
+        PSSpecifier *spec = [self specifier];
+        if (spec && [spec respondsToSelector:@selector(identifier)]) {
+            specifierID = [spec identifier] ?: @"";
+        }
+    }
     
     BOOL isGeneral = [controllerTitle isEqualToString:@"General"] || 
                      [specifierID isEqualToString:@"General"] || 
